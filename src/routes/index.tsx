@@ -161,6 +161,9 @@ function TokenStream() {
 }
 
 function HeroCanvas() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
   return (
     <Canvas
       camera={{ position: [0, 1.4, 3.2], fov: 50 }}
