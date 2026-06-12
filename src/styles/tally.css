@@ -1,0 +1,174 @@
+.tally-root{
+  --paper:#F3F5F0;
+  --paper-2:#ECEFE7;
+  --ink:#15201B;
+  --ink-soft:#5A655B;
+  --line:#D4D9CD;
+  --live:#18753F;
+  --live-bright:#2BD27A;
+  --amber:#9C5A1C;
+  --panel:#16201C;
+  --panel-line:#27332C;
+  --panel-text:#D6DDD4;
+  --panel-dim:#7C8A80;
+  --maxw:1140px;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Hanken Grotesk",system-ui,sans-serif;
+  --mono:"Space Mono",ui-monospace,monospace;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.tally-root *{box-sizing:border-box;margin:0;padding:0}
+.tally-root .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.tally-root::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:46px 46px;opacity:.35;
+  -webkit-mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 78%);
+          mask-image:radial-gradient(circle at 50% 30%,#000 0%,transparent 78%);
+}
+.tally-root .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+.tally-root a{color:inherit}
+.tally-root .eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--live);display:inline-flex;align-items:center;gap:.6em;
+}
+.tally-root .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--live);
+  box-shadow:0 0 0 0 var(--live-bright);animation:tallyPulse 2.4s infinite}
+@keyframes tallyPulse{0%{box-shadow:0 0 0 0 rgba(43,210,122,.5)}70%{box-shadow:0 0 0 9px rgba(43,210,122,0)}100%{box-shadow:0 0 0 0 rgba(43,210,122,0)}}
+.tally-root h1,.tally-root h2,.tally-root h3{font-family:var(--display);font-weight:800;line-height:1.02;letter-spacing:-.02em}
+
+.tally-root nav{position:sticky;top:0;z-index:50;background:rgba(243,245,240,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.tally-root .nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
+.tally-root .brand{font-family:var(--display);font-weight:800;font-size:1.32rem;letter-spacing:-.03em;display:flex;align-items:center;gap:.5em;text-decoration:none}
+.tally-root .brand .dot{width:13px;height:13px;border-radius:3px;background:var(--ink);position:relative;display:inline-block}
+.tally-root .brand .dot::after{content:"";position:absolute;inset:3px;border-radius:1px;background:var(--live-bright)}
+.tally-root .nav-links{display:flex;gap:30px;align-items:center}
+.tally-root .nav-links a{font-size:.92rem;color:var(--ink-soft);text-decoration:none;transition:color .15s}
+.tally-root .nav-links a:hover{color:var(--ink)}
+.tally-root .nav-cta{font-family:var(--body);font-weight:600;font-size:.9rem;background:var(--ink);color:var(--paper)!important;padding:9px 16px;border-radius:8px;text-decoration:none}
+@media(max-width:760px){.tally-root .nav-links a:not(.nav-cta){display:none}}
+
+.tally-root .hero{padding:74px 0 40px}
+.tally-root .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center}
+.tally-root .hero h1{font-size:clamp(2.7rem,7vw,5.1rem);margin:20px 0 0}
+.tally-root .hero h1 .draw{position:relative;white-space:nowrap}
+.tally-root .hero h1 .draw::after{content:"";position:absolute;left:0;right:0;bottom:.08em;height:.13em;background:var(--live-bright);border-radius:2px;transform:scaleX(0);transform-origin:left;animation:tallyUnderline 1s .5s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes tallyUnderline{to{transform:scaleX(1)}}
+.tally-root .hero p.lead{font-size:1.16rem;color:var(--ink-soft);max-width:42ch;margin:22px 0 30px}
+.tally-root .capture{display:flex;gap:10px;max-width:430px;flex-wrap:wrap}
+.tally-root .capture input{flex:1;min-width:200px;font-family:var(--body);font-size:1rem;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s}
+.tally-root .capture input:focus{border-color:var(--live);box-shadow:0 0 0 3px rgba(30,143,80,.16)}
+.tally-root .btn{font-family:var(--body);font-weight:600;font-size:1rem;cursor:pointer;border:none;background:var(--ink);color:var(--paper);padding:14px 22px;border-radius:10px;transition:transform .12s,background .15s}
+.tally-root .btn:hover{transform:translateY(-1px)}
+.tally-root .btn:active{transform:translateY(0)}
+.tally-root .capture small{flex-basis:100%;font-size:.82rem;color:var(--ink-soft);margin-top:2px}
+.tally-root .capture.done input,.tally-root .capture.done .btn{display:none}
+.tally-root .capture .ok{display:none;flex-basis:100%;font-weight:600;color:var(--live);align-items:center;gap:.5em}
+.tally-root .capture.done .ok{display:flex}
+
+.tally-root .meter{background:var(--panel);border-radius:18px;padding:26px 26px 22px;color:var(--panel-text);box-shadow:0 26px 60px -28px rgba(20,30,24,.55),inset 0 0 0 1px var(--panel-line);position:relative;overflow:hidden}
+.tally-root .meter::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 80% 0%,rgba(43,210,122,.08),transparent 60%);pointer-events:none}
+.tally-root .meter-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.tally-root .meter-top .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--panel-dim)}
+.tally-root .live-tag{font-family:var(--mono);font-size:.68rem;color:var(--live-bright);display:flex;align-items:center;gap:.5em;letter-spacing:.1em}
+.tally-root .live-tag .blip{width:7px;height:7px;border-radius:50%;background:var(--live-bright);animation:tallyPulse 2.4s infinite}
+.tally-root .readout{font-family:var(--mono);font-weight:700;font-size:clamp(2.1rem,5.2vw,3.1rem);line-height:1;letter-spacing:-.01em;color:#fff}
+.tally-root .readout .cur{color:var(--panel-dim);font-size:.5em;vertical-align:.35em}
+.tally-root .sub-read{font-family:var(--mono);font-size:.82rem;color:var(--panel-dim);margin-top:8px}
+.tally-root .sub-read b{color:var(--panel-text);font-weight:700}
+.tally-root .flow{height:7px;border-radius:6px;background:#0f1714;margin:20px 0 18px;overflow:hidden;position:relative}
+.tally-root .flow span{position:absolute;inset:0;width:38%;border-radius:6px;background:linear-gradient(90deg,transparent,var(--live),var(--live-bright));animation:tallyFlow 2.1s linear infinite}
+@keyframes tallyFlow{0%{transform:translateX(-100%)}100%{transform:translateX(360%)}}
+.tally-root .chips{display:flex;gap:8px;flex-wrap:wrap}
+.tally-root .chip{font-family:var(--mono);font-size:.74rem;padding:8px 12px;border-radius:8px;border:1px solid var(--panel-line);background:#101813;color:var(--panel-dim);cursor:pointer;transition:.15s;letter-spacing:.02em}
+.tally-root .chip:hover{color:var(--panel-text);border-color:#37463c}
+.tally-root .chip[aria-pressed="true"]{background:var(--live);color:#fff;border-color:var(--live);font-weight:700}
+.tally-root .chip .rate{opacity:.7;margin-left:.5em}
+.tally-root .chip[aria-pressed="true"] .rate{opacity:.85}
+
+.tally-root section.block{padding:78px 0;border-top:1px solid var(--line)}
+.tally-root .sec-head{max-width:60ch}
+.tally-root .sec-head h2{font-size:clamp(1.9rem,4vw,3rem);margin:14px 0 12px}
+.tally-root .sec-head p{color:var(--ink-soft);font-size:1.08rem}
+
+.tally-root .contrast{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:38px}
+.tally-root .card{background:var(--paper-2);border:1px solid var(--line);border-radius:16px;padding:28px}
+.tally-root .card.bad{background:#fff}
+.tally-root .card .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase}
+.tally-root .card.bad .tag{color:var(--amber)}
+.tally-root .card.good .tag{color:var(--live)}
+.tally-root .card h3{font-size:1.35rem;margin:12px 0 14px}
+.tally-root .card ul{list-style:none;display:grid;gap:10px}
+.tally-root .card li{display:flex;gap:10px;font-size:1rem;color:var(--ink-soft)}
+.tally-root .card li::before{content:"";flex:none;width:18px;height:18px;border-radius:50%;margin-top:2px;background:var(--amber)}
+.tally-root .card.bad li::before{background:var(--amber);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center/13px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center/13px no-repeat}
+.tally-root .card.good li::before{background:var(--live);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 13l4 4L19 7' stroke='black' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 13l4 4L19 7' stroke='black' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat}
+.tally-root .card li b{color:var(--ink);font-weight:600}
+
+.tally-root .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px}
+.tally-root .step{position:relative;padding-top:18px;border-top:2px solid var(--ink)}
+.tally-root .step .num{font-size:1.3rem;line-height:1}
+.tally-root .step h3{font-size:1.28rem;margin:10px 0 8px}
+.tally-root .step p{color:var(--ink-soft);font-size:1rem}
+.tally-root .step .meta{font-family:var(--mono);font-size:.78rem;color:var(--ink);margin-top:12px;background:var(--paper-2);display:inline-block;padding:5px 9px;border-radius:6px;border:1px solid var(--line)}
+
+.tally-root .trust{background:var(--panel);color:var(--panel-text);border-radius:22px;padding:clamp(34px,5vw,60px);position:relative;overflow:hidden}
+.tally-root .trust::before{content:"";position:absolute;inset:0;background:radial-gradient(90% 120% at 90% -10%,rgba(43,210,122,.1),transparent 55%)}
+.tally-root .trust-in{position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:46px;align-items:center}
+.tally-root .trust .eyebrow{color:var(--live-bright)}
+.tally-root .trust .eyebrow::before{background:var(--live-bright)}
+.tally-root .trust h2{color:#fff;font-size:clamp(1.8rem,3.6vw,2.7rem);margin:16px 0 16px}
+.tally-root .trust p{color:var(--panel-text);opacity:.85;font-size:1.06rem}
+.tally-root .trust p + p{margin-top:14px}
+.tally-root .checklist{display:grid;gap:14px}
+.tally-root .checklist div{display:flex;gap:12px;align-items:flex-start;font-family:var(--mono);font-size:.86rem;line-height:1.45;color:var(--panel-text)}
+.tally-root .checklist div::before{content:"";flex:none;width:20px;height:20px;border-radius:6px;background:var(--live);margin-top:1px;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 13l4 4L19 7' stroke='black' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 13l4 4L19 7' stroke='black' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat}
+
+.tally-root .prices{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.tally-root .price{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;position:relative}
+.tally-root .price.feat{border-color:var(--ink);box-shadow:0 18px 40px -26px rgba(20,30,24,.5)}
+.tally-root .price .pop{position:absolute;top:-11px;left:26px;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:4px 9px;border-radius:6px}
+.tally-root .price .amt{font-family:var(--display);font-weight:800;font-size:2.5rem;letter-spacing:-.03em}
+.tally-root .price .amt .c{font-size:1.1rem;vertical-align:.7em;color:var(--ink-soft)}
+.tally-root .price .toks{font-family:var(--mono);font-size:.82rem;color:var(--live);margin:6px 0 14px}
+.tally-root .price p{color:var(--ink-soft);font-size:.96rem}
+.tally-root .price-note{font-family:var(--mono);font-size:.76rem;color:var(--amber);margin-top:18px;display:flex;gap:.5em;align-items:center}
+
+.tally-root .who{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.tally-root .who .card{background:var(--paper-2)}
+.tally-root .who .ic{font-size:1.6rem}
+.tally-root .who h3{font-size:1.2rem;margin:12px 0 8px}
+.tally-root .who p{color:var(--ink-soft);font-size:.98rem}
+
+.tally-root .final{text-align:center;padding:90px 0;border-top:1px solid var(--line)}
+.tally-root .final h2{font-size:clamp(2rem,5vw,3.4rem)}
+.tally-root .final p{color:var(--ink-soft);font-size:1.1rem;margin:14px auto 30px;max-width:46ch}
+.tally-root .final .capture{margin:0 auto;justify-content:center}
+
+.tally-root footer{border-top:1px solid var(--line);padding:34px 0;color:var(--ink-soft);font-size:.9rem}
+.tally-root .foot-in{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.tally-root .foot-in a{color:var(--ink-soft);text-decoration:none;margin-left:18px}
+.tally-root .foot-in a:hover{color:var(--ink)}
+.tally-root .disclaimer{font-size:.78rem;color:var(--ink-soft);opacity:.8;margin-top:14px;max-width:70ch}
+
+.tally-root .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.tally-root .reveal.in{opacity:1;transform:none}
+
+@media(max-width:880px){
+  .tally-root .hero-grid,.tally-root .trust-in{grid-template-columns:1fr;gap:38px}
+  .tally-root .contrast,.tally-root .steps,.tally-root .prices,.tally-root .who{grid-template-columns:1fr}
+  .tally-root .hero{padding:48px 0 20px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tally-root *{animation:none!important;transition:none!important}
+  .tally-root .reveal{opacity:1;transform:none}
+  .tally-root .hero h1 .draw::after{transform:scaleX(1)}
+}
