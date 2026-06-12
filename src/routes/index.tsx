@@ -310,6 +310,34 @@ function Index() {
   useReveal();
   const onMove = useGlassHover();
   const [submitted, setSubmitted] = useState(false);
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [preference, setPreference] = useState<"text" | "voice" | "both">("both");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    const { error: err } = await supabase
+      .from("waitlist_signups")
+      .insert({
+        email: email.trim().toLowerCase(),
+        whatsapp: whatsapp.trim() || null,
+        preference,
+      });
+    setSubmitting(false);
+    if (err) {
+      if (err.code === "23505" || err.message.toLowerCase().includes("duplicate")) {
+        setError("That email is already on the list.");
+      } else {
+        setError(err.message || "Couldn't save your signup. Try again in a moment.");
+      }
+      return;
+    }
+    setSubmitted(true);
+  }
 
   return (
     <div className="tokn-root t-grain">
@@ -511,18 +539,65 @@ function Index() {
               </span>
             </h2>
             <p className="t-sub" style={{ margin: "20px auto 0" }}>
-              Leave your email and we'll send an invite the day the meter goes live. The first 1,000 accounts start with $10 of credit pre-loaded.
+              Leave your email and we'll let you know the day the meter goes live — no spam. The first 1,000 accounts start with $10 of credit pre-loaded.
             </p>
-            <form
-              className="t-form"
-              onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
-            >
-              <input type="email" required placeholder="you@domain.com" disabled={submitted} />
-              <button type="submit" className="t-btn t-btn-primary" disabled={submitted}>
-                {submitted ? "Added to early access" : "Get early access"}
+            <form className="t-form" onSubmit={handleSubmit} style={{ flexDirection: "column", gap: 12, alignItems: "stretch", maxWidth: 520 }}>
+              <input
+                type="email"
+                required
+                placeholder="you@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitted || submitting}
+                style={{ width: "100%" }}
+              />
+              <input
+                type="tel"
+                placeholder="+52 55 1234 5678"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                disabled={submitted || submitting}
+                aria-label="WhatsApp (optional)"
+                style={{ width: "100%", fontSize: 13, padding: "10px 14px", opacity: 0.85 }}
+              />
+              <div style={{ fontSize: 11, color: "var(--t-muted)", textAlign: "left", marginTop: -4, letterSpacing: "0.02em" }}>
+                WhatsApp (optional) — we'll ping you first if early access opens.
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 4, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11, color: "var(--t-muted)", alignSelf: "center", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  I'd use it for
+                </span>
+                {([
+                  { v: "text", l: "Text" },
+                  { v: "voice", l: "Voice" },
+                  { v: "both", l: "Both" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    className={`t-model-tab ${preference === opt.v ? "active" : ""}`}
+                    onClick={() => setPreference(opt.v)}
+                    disabled={submitted || submitting}
+                    style={{ fontSize: 12, padding: "6px 12px" }}
+                  >
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
+              <button type="submit" className="t-btn t-btn-primary" disabled={submitted || submitting} style={{ marginTop: 6 }}>
+                {submitted ? "You're on the list" : submitting ? "Saving…" : "Get early access"}
               </button>
             </form>
-            {submitted && <span className="ok" style={{ color: "var(--t-mint)", display: "block", marginTop: 16, fontSize: 14 }}>Saved. The invite goes to that address on launch day.</span>}
+            {submitted && (
+              <span className="ok" style={{ color: "var(--t-mint)", display: "block", marginTop: 16, fontSize: 14 }}>
+                Done — we'll let you know at launch.
+              </span>
+            )}
+            {error && (
+              <span style={{ color: "#F87171", display: "block", marginTop: 16, fontSize: 14 }}>
+                {error}
+              </span>
+            )}
           </div>
         </div>
       </section>
