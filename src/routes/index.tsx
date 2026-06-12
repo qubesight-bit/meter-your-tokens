@@ -414,7 +414,7 @@ function Index() {
         <div className="t-section-inner">
           <div className="t-section-head t-reveal">
             <div className="t-kicker">Models</div>
-            <h2 className="t-h2">Five frontier models on one balance.</h2>
+            <h2 className="t-h2">Six frontier models — text and voice — on one balance.</h2>
             <p className="t-sub">
               Text models bill per million input / output tokens; voice bills per character spoken.
               Rates below are each provider's own published price — add 5% at checkout.
