@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Tally: pay for what you draw" },
       { name: "description", content: "One balance, every major AI model. No subscription. The meter only moves when you do." },
-      { name: "theme-color", content: "#F3F5F0" },
+      { name: "theme-color", content: "#070B1F" },
       { property: "og:title", content: "Tally: pay for what you draw" },
       { property: "og:description", content: "Top up once and draw on Claude, GPT, or DeepSeek from a single balance, billed by the token as you go." },
       { property: "og:type", content: "website" },
@@ -96,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap",
       },
     ],
   }),
