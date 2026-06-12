@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import "../styles/tally.css";
+import "../styles/tokn.css";
 
 export const Route = createFileRoute("/")({
   head: () => ({
