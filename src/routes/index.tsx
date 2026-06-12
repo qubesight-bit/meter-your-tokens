@@ -2,14 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import "../styles/tally.css";
+import "../styles/tokn.css";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tally — Pay-as-you-draw access to every AI" },
+      { title: "Tokn.lat — Pay-as-you-draw access to every AI" },
       { name: "description", content: "One balance, every major model. No subscription. The meter only moves when you do." },
-      { property: "og:title", content: "Tally — Pay-as-you-draw access to every AI" },
+      { property: "og:title", content: "Tokn.lat — Pay-as-you-draw access to every AI" },
       { property: "og:description", content: "Top up once. Draw on Claude, GPT, DeepSeek and Gemini from a single balance, billed by the token." },
       { property: "og:url", content: "/" },
     ],
@@ -280,7 +280,7 @@ function Index() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <div className="tally-root t-grain">
+    <div className="tokn-root t-grain">
       <div className="t-orb a" />
       <div className="t-orb b" />
       <div className="t-orb c" />
@@ -290,7 +290,7 @@ function Index() {
         <div className="t-nav-inner">
           <div className="t-logo">
             <div className="t-logo-mark" />
-            <span>Tally</span>
+            <span>Tokn.lat</span>
           </div>
           <div className="t-nav-links">
             <a href="#how">How it works</a>
@@ -494,10 +494,10 @@ function Index() {
         <div className="t-footer-inner">
           <div className="t-logo">
             <div className="t-logo-mark" />
-            <span>Tally</span>
+            <span>Tokn.lat</span>
           </div>
           <p className="disclaimer">
-            Tally is an independent metered access service and is not affiliated with, endorsed by, or sponsored by
+            Tokn.lat is an independent metered access service and is not affiliated with, endorsed by, or sponsored by
             Anthropic, OpenAI, DeepSeek, or Google. Model names are trademarks of their respective owners.
             Pricing is indicative and subject to change at launch.
           </p>

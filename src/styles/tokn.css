@@ -1,5 +1,5 @@
-/* Tally — Aurora Glass */
-.tally-root {
+/* Tokn.lat — Aurora Glass */
+.tokn-root {
   --t-bg: #070B1F;
   --t-bg-2: #0B1230;
   --t-surface: #0F1842;
@@ -22,15 +22,15 @@
   position: relative;
 }
 
-.tally-root * { box-sizing: border-box; }
+.tokn-root * { box-sizing: border-box; }
 
-.tally-root h1, .tally-root h2, .tally-root h3, .tally-root h4 {
+.tokn-root h1, .tokn-root h2, .tokn-root h3, .tokn-root h4 {
   font-family: "Space Grotesk", system-ui, sans-serif;
   letter-spacing: -0.025em;
   font-weight: 600;
 }
 
-.tally-root .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.tokn-root .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
 
 /* Ambient orbs */
 .t-orb {
