@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { supabase } from "@/integrations/supabase/client";
 import "../styles/tokn.css";
 
 export const Route = createFileRoute("/")({
@@ -18,13 +19,25 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Model = { id: string; name: string; provider: string; inRate: number; outRate: number; color: string };
+type Model = {
+  id: string;
+  name: string;
+  provider: string;
+  color: string;
+  kind: "text" | "voice";
+  // text models
+  inRate?: number;
+  outRate?: number;
+  // voice models: $ per 1,000 characters synthesised
+  charRate?: number;
+};
 const MODELS: Model[] = [
-  { id: "opus", name: "Claude Opus 4.8", provider: "Anthropic", inRate: 5, outRate: 25, color: "#A78BFA" },
-  { id: "gpt", name: "GPT-5.2", provider: "OpenAI", inRate: 1.75, outRate: 14, color: "#4ADE80" },
-  { id: "sonnet", name: "Claude Sonnet 4.6", provider: "Anthropic", inRate: 3, outRate: 15, color: "#67E8F9" },
-  { id: "gemini", name: "Gemini 2.5 Ultra", provider: "Google", inRate: 1.25, outRate: 10, color: "#F472B6" },
-  { id: "ds", name: "DeepSeek V3.2", provider: "DeepSeek", inRate: 0.14, outRate: 0.28, color: "#FBBF24" },
+  { id: "opus", name: "Claude Opus 4.8", provider: "Anthropic", inRate: 5, outRate: 25, color: "#A78BFA", kind: "text" },
+  { id: "gpt", name: "GPT-5.2", provider: "OpenAI", inRate: 1.75, outRate: 14, color: "#4ADE80", kind: "text" },
+  { id: "sonnet", name: "Claude Sonnet 4.6", provider: "Anthropic", inRate: 3, outRate: 15, color: "#67E8F9", kind: "text" },
+  { id: "gemini", name: "Gemini 2.5 Ultra", provider: "Google", inRate: 1.25, outRate: 10, color: "#F472B6", kind: "text" },
+  { id: "ds", name: "DeepSeek V3.2", provider: "DeepSeek", inRate: 0.14, outRate: 0.28, color: "#FBBF24", kind: "text" },
+  { id: "11labs", name: "ElevenLabs Multilingual v2", provider: "ElevenLabs · Voice", color: "#F0ABFC", kind: "voice", charRate: 0.18 },
 ];
 
 /* ============== 3D PARTICLE TOKEN STREAM ============== */
@@ -198,24 +211,34 @@ function LiveMeter() {
     const tick = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      setTokens((t) => t + dt * 380);
-      setCost((c) => c + dt * 380 * ((model.inRate * 0.6 + model.outRate * 0.4) / 1_000_000));
+      if (model.kind === "voice") {
+        // characters streamed at ~220 chars/sec (typical TTS pace)
+        const cps = 220;
+        setTokens((t) => t + dt * cps);
+        setCost((c) => c + (dt * cps * (model.charRate ?? 0)) / 1000);
+      } else {
+        setTokens((t) => t + dt * 380);
+        setCost((c) => c + dt * 380 * (((model.inRate ?? 0) * 0.6 + (model.outRate ?? 0) * 0.4) / 1_000_000));
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [modelId]);
 
+  const isVoice = model.kind === "voice";
+  const unitLabel = isVoice ? "characters spoken" : "tokens streamed";
+
   return (
     <div className="t-glass">
       <div className="t-model-tabs">
-        {MODELS.slice(0, 4).map((m) => (
+        {[...MODELS.slice(0, 3), MODELS.find((m) => m.id === "11labs")!].map((m) => (
           <button
             key={m.id}
             className={`t-model-tab ${m.id === modelId ? "active" : ""}`}
             onClick={() => setModelId(m.id)}
           >
-            {m.name}
+            {m.kind === "voice" ? `🔊 ${m.name}` : m.name}
           </button>
         ))}
       </div>
@@ -225,21 +248,30 @@ function LiveMeter() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
             <span className="t-pill">● Live</span>
             <span className="mono" style={{ fontSize: 11, color: "var(--t-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              Session draw
+              {isVoice ? "Voice draw" : "Session draw"}
             </span>
           </div>
           <div className="t-meter-display">
             ${cost.toFixed(4)}
           </div>
           <div className="mono" style={{ marginTop: 12, color: "var(--t-muted)", fontSize: 13 }}>
-            {Math.floor(tokens).toLocaleString()} tokens streamed
+            {Math.floor(tokens).toLocaleString()} {unitLabel}
           </div>
         </div>
 
         <div>
           <div className="t-meter-row"><span>Model</span><strong>{model.name}</strong></div>
-          <div className="t-meter-row"><span>Input rate</span><strong>${model.inRate}/M</strong></div>
-          <div className="t-meter-row"><span>Output rate</span><strong>${model.outRate}/M</strong></div>
+          {isVoice ? (
+            <>
+              <div className="t-meter-row"><span>Rate</span><strong>${model.charRate}/1k chars</strong></div>
+              <div className="t-meter-row"><span>~ per minute</span><strong>${(((model.charRate ?? 0) * 220 * 60) / 1000).toFixed(3)}</strong></div>
+            </>
+          ) : (
+            <>
+              <div className="t-meter-row"><span>Input rate</span><strong>${model.inRate}/M</strong></div>
+              <div className="t-meter-row"><span>Output rate</span><strong>${model.outRate}/M</strong></div>
+            </>
+          )}
           <div className="t-meter-row"><span>Balance</span><strong>$24.81</strong></div>
           <div className="t-meter-row"><span>Spent today</span><strong>${(cost + 0.42).toFixed(4)}</strong></div>
         </div>
@@ -278,6 +310,34 @@ function Index() {
   useReveal();
   const onMove = useGlassHover();
   const [submitted, setSubmitted] = useState(false);
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [preference, setPreference] = useState<"text" | "voice" | "both">("both");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    const { error: err } = await supabase
+      .from("waitlist_signups")
+      .insert({
+        email: email.trim().toLowerCase(),
+        whatsapp: whatsapp.trim() || null,
+        preference,
+      });
+    setSubmitting(false);
+    if (err) {
+      if (err.code === "23505" || err.message.toLowerCase().includes("duplicate")) {
+        setError("That email is already on the list.");
+      } else {
+        setError(err.message || "Couldn't save your signup. Try again in a moment.");
+      }
+      return;
+    }
+    setSubmitted(true);
+  }
 
   return (
     <div className="tokn-root t-grain">
@@ -314,8 +374,8 @@ function Index() {
                 <span className="grad">you actually draw.</span>
               </h1>
               <p className="t-lede">
-                One balance, every major model — Claude, GPT, Gemini, DeepSeek.
-                No subscription. No seat math. The meter only moves when you do.
+                One balance for text <em>and</em> voice — Claude, GPT, Gemini, DeepSeek and ElevenLabs.
+                Not just chatbots. No subscription, no seat math. The meter only moves when you do.
               </p>
               <div className="t-cta-row">
                 <a href="#waitlist" className="t-btn t-btn-primary">
@@ -382,10 +442,10 @@ function Index() {
         <div className="t-section-inner">
           <div className="t-section-head t-reveal">
             <div className="t-kicker">Models</div>
-            <h2 className="t-h2">Five frontier models on one balance.</h2>
+            <h2 className="t-h2">Six frontier models — text and voice — on one balance.</h2>
             <p className="t-sub">
-              Rates below are the provider's own published prices per million input / output tokens.
-              Add 5% at checkout — that's the whole pricing sheet.
+              Text models bill per million input / output tokens; voice bills per character spoken.
+              Rates below are each provider's own published price — add 5% at checkout.
             </p>
           </div>
           <div className="t-models-strip">
@@ -394,9 +454,20 @@ function Index() {
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: m.color, marginBottom: 14 }} />
                 <div className="name">{m.name}</div>
                 <div className="rate">{m.provider}</div>
-                <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
-                  ${m.inRate} in · ${m.outRate} out<span style={{ color: "var(--t-muted)" }}> / 1M tok</span>
-                </div>
+                {m.kind === "voice" ? (
+                  <>
+                    <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
+                      ${m.charRate} <span style={{ color: "var(--t-muted)" }}>/ 1k characters</span>
+                    </div>
+                    <div className="rate" style={{ marginTop: 6, color: "var(--t-muted)", fontSize: 12 }}>
+                      Text-to-speech for narration, dubbing, product voices.
+                    </div>
+                  </>
+                ) : (
+                  <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
+                    ${m.inRate} in · ${m.outRate} out<span style={{ color: "var(--t-muted)" }}> / 1M tok</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -468,18 +539,65 @@ function Index() {
               </span>
             </h2>
             <p className="t-sub" style={{ margin: "20px auto 0" }}>
-              Leave your email and we'll send an invite the day the meter goes live. The first 1,000 accounts start with $10 of credit pre-loaded.
+              Leave your email and we'll let you know the day the meter goes live — no spam. The first 1,000 accounts start with $10 of credit pre-loaded.
             </p>
-            <form
-              className="t-form"
-              onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
-            >
-              <input type="email" required placeholder="you@domain.com" disabled={submitted} />
-              <button type="submit" className="t-btn t-btn-primary" disabled={submitted}>
-                {submitted ? "Added to early access" : "Get early access"}
+            <form className="t-form" onSubmit={handleSubmit} style={{ flexDirection: "column", gap: 12, alignItems: "stretch", maxWidth: 520 }}>
+              <input
+                type="email"
+                required
+                placeholder="you@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitted || submitting}
+                style={{ width: "100%" }}
+              />
+              <input
+                type="tel"
+                placeholder="+52 55 1234 5678"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                disabled={submitted || submitting}
+                aria-label="WhatsApp (optional)"
+                style={{ width: "100%", fontSize: 13, padding: "10px 14px", opacity: 0.85 }}
+              />
+              <div style={{ fontSize: 11, color: "var(--t-muted)", textAlign: "left", marginTop: -4, letterSpacing: "0.02em" }}>
+                WhatsApp (optional) — we'll ping you first if early access opens.
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 4, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 11, color: "var(--t-muted)", alignSelf: "center", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  I'd use it for
+                </span>
+                {([
+                  { v: "text", l: "Text" },
+                  { v: "voice", l: "Voice" },
+                  { v: "both", l: "Both" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    className={`t-model-tab ${preference === opt.v ? "active" : ""}`}
+                    onClick={() => setPreference(opt.v)}
+                    disabled={submitted || submitting}
+                    style={{ fontSize: 12, padding: "6px 12px" }}
+                  >
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
+              <button type="submit" className="t-btn t-btn-primary" disabled={submitted || submitting} style={{ marginTop: 6 }}>
+                {submitted ? "You're on the list" : submitting ? "Saving…" : "Get early access"}
               </button>
             </form>
-            {submitted && <span className="ok" style={{ color: "var(--t-mint)", display: "block", marginTop: 16, fontSize: 14 }}>Saved. The invite goes to that address on launch day.</span>}
+            {submitted && (
+              <span className="ok" style={{ color: "var(--t-mint)", display: "block", marginTop: 16, fontSize: 14 }}>
+                Done — we'll let you know at launch.
+              </span>
+            )}
+            {error && (
+              <span style={{ color: "#F87171", display: "block", marginTop: 16, fontSize: 14 }}>
+                {error}
+              </span>
+            )}
           </div>
         </div>
       </section>
