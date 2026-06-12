@@ -77,15 +77,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tokn.lat: pay for what you draw" },
+      { title: "Tally: pay for what you draw" },
       { name: "description", content: "One balance, every major AI model. No subscription. The meter only moves when you do." },
-      { name: "theme-color", content: "#070B1F" },
-      { property: "og:title", content: "Tokn.lat: pay for what you draw" },
-      { property: "og:description", content: "Top up once and draw on Claude, GPT, or DeepSeek from a single balance, billed by the token as you go." },
+      { name: "theme-color", content: "#F3F5F0" },
+      { property: "og:title", content: "Tally: pay for what you draw" },
+      { property: "og:description", content: "One balance, every major AI model. No subscription. The meter only moves when you do." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Tokn.lat: pay for what you draw" },
-      { name: "twitter:description", content: "One balance covers Claude, GPT, and DeepSeek, billed by the token. Top up from $1." },
+      { name: "twitter:title", content: "Tally: pay for what you draw" },
+      { name: "twitter:description", content: "One balance, every major AI model. No subscription. The meter only moves when you do." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/736a6b8b-c287-4ab1-86c5-a7ccbd34f2bc/id-preview-f5259e5c--592105c0-dde9-4f31-90a3-b1f78a5524d7.lovable.app-1781248592542.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/736a6b8b-c287-4ab1-86c5-a7ccbd34f2bc/id-preview-f5259e5c--592105c0-dde9-4f31-90a3-b1f78a5524d7.lovable.app-1781248592542.png" },
     ],
     links: [
       {
@@ -96,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap",
       },
     ],
   }),
