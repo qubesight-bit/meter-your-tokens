@@ -307,7 +307,7 @@ function Index() {
         <div className="t-hero-inner">
           <div className="t-hero-grid">
             <div>
-              <span className="t-eyebrow"><span className="dot" />Metered intelligence · v0.9 preview</span>
+              <span className="t-eyebrow"><span className="dot" />Private preview · v0.9.2</span>
               <h1 className="t-h1">
                 Pay only for<br />
                 the tokens<br />
@@ -331,12 +331,6 @@ function Index() {
             </div>
 
             <div className="t-canvas-wrap">
-              <div className="t-canvas-meta tl">
-                <strong>TKN-STREAM</strong> · 1,800 particles
-              </div>
-              <div className="t-canvas-meta br">
-                aurora.gate<br /><strong>v0.9.2</strong>
-              </div>
               <HeroCanvas />
             </div>
           </div>
@@ -347,11 +341,11 @@ function Index() {
       <section className="t-section" id="how">
         <div className="t-section-inner t-reveal">
           <div className="t-section-head">
-            <div className="t-kicker">// 01 · The Meter</div>
-            <h2 className="t-h2">A balance that breathes in real time.</h2>
+            <div className="t-kicker">The meter</div>
+            <h2 className="t-h2">Watch the bill tick, token by token.</h2>
             <p className="t-sub">
-              Switch models on the fly. Tokens stream, cost ticks, balance updates —
-              all from a single deposit. No bundles, no overages, no surprises.
+              Pick a model. Every input and output token is priced at the provider's published rate and
+              subtracted from your balance the moment it streams. Switch models without touching billing.
             </p>
           </div>
           <div onMouseMove={onMove}>
@@ -364,14 +358,14 @@ function Index() {
       <section className="t-section">
         <div className="t-section-inner">
           <div className="t-section-head t-reveal">
-            <div className="t-kicker">// 02 · How it works</div>
-            <h2 className="t-h2">Three moves. Then it's just drawing.</h2>
+            <div className="t-kicker">How it works</div>
+            <h2 className="t-h2">Three steps. Then you're just calling models.</h2>
           </div>
           <div className="t-feat-grid">
             {[
-              { n: "STEP / 01", h: "Top up once", p: "From $1 to whatever you want. Stripe, Apple Pay, crypto. Credit never expires." },
-              { n: "STEP / 02", h: "Pick a model", p: "Claude, GPT, Gemini, DeepSeek — all behind one API key, one dashboard, one balance." },
-              { n: "STEP / 03", h: "Draw freely", p: "We meter every token at provider rates plus a flat 5% to keep the lights on. That's it." },
+              { n: "Step 1", h: "Top up your balance", p: "Add credit from $1 with Stripe, Apple Pay or USDC. It sits in your account until you spend it — no expiry, withdrawable anytime." },
+              { n: "Step 2", h: "Get one API key", p: "An OpenAI-compatible endpoint that routes to Claude, GPT, Gemini and DeepSeek. Point your existing SDK at it; nothing else changes." },
+              { n: "Step 3", h: "Call the models", p: "Each request is billed at the provider's published per-token rate plus a flat 5% routing fee. Both numbers show up on the invoice line." },
             ].map((f, i) => (
               <div key={i} className="t-glass t-feat t-reveal" onMouseMove={onMove}>
                 <div className="t-feat-num">{f.n}</div>
@@ -387,20 +381,21 @@ function Index() {
       <section className="t-section" id="models">
         <div className="t-section-inner">
           <div className="t-section-head t-reveal">
-            <div className="t-kicker">// 03 · Models</div>
-            <h2 className="t-h2">Every major frontier model, one balance.</h2>
+            <div className="t-kicker">Models</div>
+            <h2 className="t-h2">Five frontier models on one balance.</h2>
             <p className="t-sub">
-              Provider rates passed through transparently. Switch mid-conversation. We handle the routing.
+              Rates below are the provider's own published prices per million input / output tokens.
+              Add 5% at checkout — that's the whole pricing sheet.
             </p>
           </div>
           <div className="t-models-strip">
             {MODELS.map((m, i) => (
               <div key={m.id} className="t-glass t-model-card t-reveal" style={{ transitionDelay: `${i * 60}ms` }} onMouseMove={onMove}>
-                <div style={{ width: 24, height: 24, borderRadius: 6, background: m.color, marginBottom: 14, boxShadow: `0 0 20px ${m.color}80` }} />
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: m.color, marginBottom: 14 }} />
                 <div className="name">{m.name}</div>
                 <div className="rate">{m.provider}</div>
                 <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
-                  ${m.inRate} / ${m.outRate}<span style={{ color: "var(--t-muted)" }}> /M</span>
+                  ${m.inRate} in · ${m.outRate} out<span style={{ color: "var(--t-muted)" }}> / 1M tok</span>
                 </div>
               </div>
             ))}
@@ -412,9 +407,9 @@ function Index() {
       <section className="t-section" id="pricing">
         <div className="t-section-inner">
           <div className="t-section-head t-reveal">
-            <div className="t-kicker">// 04 · Pricing</div>
-            <h2 className="t-h2">No tiers. No seats. Just credit.</h2>
-            <p className="t-sub">Top up what you want. Use what you draw. Refunds — always.</p>
+            <div className="t-kicker">Pricing</div>
+            <h2 className="t-h2">No plans. No seats. Just prepaid credit.</h2>
+            <p className="t-sub">Pick a top-up size below — or any custom amount. Withdraw the unused balance whenever.</p>
           </div>
           <div className="t-price-grid">
             {[
@@ -440,8 +435,8 @@ function Index() {
       <section className="t-section" id="faq">
         <div className="t-section-inner">
           <div className="t-section-head t-reveal">
-            <div className="t-kicker">// 05 · FAQ</div>
-            <h2 className="t-h2">Things people ask before they top up.</h2>
+            <div className="t-kicker">FAQ</div>
+            <h2 className="t-h2">Questions we get before the first top-up.</h2>
           </div>
           <div className="t-faq">
             {[
@@ -465,7 +460,7 @@ function Index() {
       <section className="t-section" id="waitlist">
         <div className="t-section-inner t-reveal">
           <div className="t-cta-box">
-            <span className="t-eyebrow"><span className="dot" />Launching Q3 · 2026</span>
+            <span className="t-eyebrow"><span className="dot" />Opening to early accounts · Q3 2026</span>
             <h2 className="t-h2" style={{ marginTop: 20 }}>
               The meter goes live<br />
               <span style={{ background: "var(--t-aurora)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
@@ -473,18 +468,18 @@ function Index() {
               </span>
             </h2>
             <p className="t-sub" style={{ margin: "20px auto 0" }}>
-              Join the early access list. First 1,000 get $10 of credit on the house.
+              Leave your email and we'll send an invite the day the meter goes live. The first 1,000 accounts start with $10 of credit pre-loaded.
             </p>
             <form
               className="t-form"
               onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
             >
-              <input type="email" required placeholder="you@studio.com" disabled={submitted} />
+              <input type="email" required placeholder="you@domain.com" disabled={submitted} />
               <button type="submit" className="t-btn t-btn-primary" disabled={submitted}>
-                {submitted ? "On the list" : "Get early access"}
+                {submitted ? "Added to early access" : "Get early access"}
               </button>
             </form>
-            {submitted && <span className="ok" style={{ color: "var(--t-mint)", display: "block", marginTop: 16, fontSize: 14 }}>✓ See you at launch.</span>}
+            {submitted && <span className="ok" style={{ color: "var(--t-mint)", display: "block", marginTop: 16, fontSize: 14 }}>Saved. The invite goes to that address on launch day.</span>}
           </div>
         </div>
       </section>
