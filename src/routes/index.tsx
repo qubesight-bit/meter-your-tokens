@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { supabase } from "@/integrations/supabase/client";
 import "../styles/tokn.css";
 
 export const Route = createFileRoute("/")({
@@ -18,13 +19,25 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Model = { id: string; name: string; provider: string; inRate: number; outRate: number; color: string };
+type Model = {
+  id: string;
+  name: string;
+  provider: string;
+  color: string;
+  kind: "text" | "voice";
+  // text models
+  inRate?: number;
+  outRate?: number;
+  // voice models: $ per 1,000 characters synthesised
+  charRate?: number;
+};
 const MODELS: Model[] = [
-  { id: "opus", name: "Claude Opus 4.8", provider: "Anthropic", inRate: 5, outRate: 25, color: "#A78BFA" },
-  { id: "gpt", name: "GPT-5.2", provider: "OpenAI", inRate: 1.75, outRate: 14, color: "#4ADE80" },
-  { id: "sonnet", name: "Claude Sonnet 4.6", provider: "Anthropic", inRate: 3, outRate: 15, color: "#67E8F9" },
-  { id: "gemini", name: "Gemini 2.5 Ultra", provider: "Google", inRate: 1.25, outRate: 10, color: "#F472B6" },
-  { id: "ds", name: "DeepSeek V3.2", provider: "DeepSeek", inRate: 0.14, outRate: 0.28, color: "#FBBF24" },
+  { id: "opus", name: "Claude Opus 4.8", provider: "Anthropic", inRate: 5, outRate: 25, color: "#A78BFA", kind: "text" },
+  { id: "gpt", name: "GPT-5.2", provider: "OpenAI", inRate: 1.75, outRate: 14, color: "#4ADE80", kind: "text" },
+  { id: "sonnet", name: "Claude Sonnet 4.6", provider: "Anthropic", inRate: 3, outRate: 15, color: "#67E8F9", kind: "text" },
+  { id: "gemini", name: "Gemini 2.5 Ultra", provider: "Google", inRate: 1.25, outRate: 10, color: "#F472B6", kind: "text" },
+  { id: "ds", name: "DeepSeek V3.2", provider: "DeepSeek", inRate: 0.14, outRate: 0.28, color: "#FBBF24", kind: "text" },
+  { id: "11labs", name: "ElevenLabs Multilingual v2", provider: "ElevenLabs · Voice", color: "#F0ABFC", kind: "voice", charRate: 0.18 },
 ];
 
 /* ============== 3D PARTICLE TOKEN STREAM ============== */
@@ -198,24 +211,34 @@ function LiveMeter() {
     const tick = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      setTokens((t) => t + dt * 380);
-      setCost((c) => c + dt * 380 * ((model.inRate * 0.6 + model.outRate * 0.4) / 1_000_000));
+      if (model.kind === "voice") {
+        // characters streamed at ~220 chars/sec (typical TTS pace)
+        const cps = 220;
+        setTokens((t) => t + dt * cps);
+        setCost((c) => c + (dt * cps * (model.charRate ?? 0)) / 1000);
+      } else {
+        setTokens((t) => t + dt * 380);
+        setCost((c) => c + dt * 380 * (((model.inRate ?? 0) * 0.6 + (model.outRate ?? 0) * 0.4) / 1_000_000));
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [modelId]);
 
+  const isVoice = model.kind === "voice";
+  const unitLabel = isVoice ? "characters spoken" : "tokens streamed";
+
   return (
     <div className="t-glass">
       <div className="t-model-tabs">
-        {MODELS.slice(0, 4).map((m) => (
+        {[...MODELS.slice(0, 3), MODELS.find((m) => m.id === "11labs")!].map((m) => (
           <button
             key={m.id}
             className={`t-model-tab ${m.id === modelId ? "active" : ""}`}
             onClick={() => setModelId(m.id)}
           >
-            {m.name}
+            {m.kind === "voice" ? `🔊 ${m.name}` : m.name}
           </button>
         ))}
       </div>
@@ -225,21 +248,30 @@ function LiveMeter() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
             <span className="t-pill">● Live</span>
             <span className="mono" style={{ fontSize: 11, color: "var(--t-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              Session draw
+              {isVoice ? "Voice draw" : "Session draw"}
             </span>
           </div>
           <div className="t-meter-display">
             ${cost.toFixed(4)}
           </div>
           <div className="mono" style={{ marginTop: 12, color: "var(--t-muted)", fontSize: 13 }}>
-            {Math.floor(tokens).toLocaleString()} tokens streamed
+            {Math.floor(tokens).toLocaleString()} {unitLabel}
           </div>
         </div>
 
         <div>
           <div className="t-meter-row"><span>Model</span><strong>{model.name}</strong></div>
-          <div className="t-meter-row"><span>Input rate</span><strong>${model.inRate}/M</strong></div>
-          <div className="t-meter-row"><span>Output rate</span><strong>${model.outRate}/M</strong></div>
+          {isVoice ? (
+            <>
+              <div className="t-meter-row"><span>Rate</span><strong>${model.charRate}/1k chars</strong></div>
+              <div className="t-meter-row"><span>~ per minute</span><strong>${(((model.charRate ?? 0) * 220 * 60) / 1000).toFixed(3)}</strong></div>
+            </>
+          ) : (
+            <>
+              <div className="t-meter-row"><span>Input rate</span><strong>${model.inRate}/M</strong></div>
+              <div className="t-meter-row"><span>Output rate</span><strong>${model.outRate}/M</strong></div>
+            </>
+          )}
           <div className="t-meter-row"><span>Balance</span><strong>$24.81</strong></div>
           <div className="t-meter-row"><span>Spent today</span><strong>${(cost + 0.42).toFixed(4)}</strong></div>
         </div>
