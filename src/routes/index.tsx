@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import * as THREE from "three";
 import "../styles/tally.css";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tally: pay for what you draw" },
-      { name: "description", content: "One balance, every major AI model. No subscription. The meter only moves when you do." },
-      { property: "og:title", content: "Tally: pay for what you draw" },
-      { property: "og:description", content: "Top up once and draw on Claude, GPT, or DeepSeek from a single balance, billed by the token as you go." },
+      { title: "Tally — Pay-as-you-draw access to every AI" },
+      { name: "description", content: "One balance, every major model. No subscription. The meter only moves when you do." },
+      { property: "og:title", content: "Tally — Pay-as-you-draw access to every AI" },
+      { property: "og:description", content: "Top up once. Draw on Claude, GPT, DeepSeek and Gemini from a single balance, billed by the token." },
       { property: "og:url", content: "/" },
     ],
     links: [{ rel: "canonical", href: "/" }],
@@ -16,282 +18,491 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Model = { id: string; name: string; inRate: number; outRate: number; label: string };
+type Model = { id: string; name: string; provider: string; inRate: number; outRate: number; color: string };
 const MODELS: Model[] = [
-  { id: "opus", name: "Claude Opus 4.8", inRate: 5, outRate: 25, label: "$5/$25" },
-  { id: "sonnet", name: "Claude Sonnet 4.6", inRate: 3, outRate: 15, label: "$3/$15" },
-  { id: "haiku", name: "Claude Haiku 4.5", inRate: 1, outRate: 5, label: "$1/$5" },
-  { id: "gpt", name: "GPT-5.2", inRate: 1.75, outRate: 14, label: "$1.75/$14" },
-  { id: "ds", name: "DeepSeek", inRate: 0.14, outRate: 0.28, label: "$0.14/$0.28" },
+  { id: "opus", name: "Claude Opus 4.8", provider: "Anthropic", inRate: 5, outRate: 25, color: "#A78BFA" },
+  { id: "gpt", name: "GPT-5.2", provider: "OpenAI", inRate: 1.75, outRate: 14, color: "#4ADE80" },
+  { id: "sonnet", name: "Claude Sonnet 4.6", provider: "Anthropic", inRate: 3, outRate: 15, color: "#67E8F9" },
+  { id: "gemini", name: "Gemini 2.5 Ultra", provider: "Google", inRate: 1.25, outRate: 10, color: "#F472B6" },
+  { id: "ds", name: "DeepSeek V3.2", provider: "DeepSeek", inRate: 0.14, outRate: 0.28, color: "#FBBF24" },
 ];
 
-function WaitlistForm({ cta, note, done }: { cta: string; note: string; done: string }) {
-  const [submitted, setSubmitted] = useState(false);
+/* ============== 3D PARTICLE TOKEN STREAM ============== */
+function TokenStream() {
+  const COUNT = 1800;
+  const pointsRef = useRef<THREE.Points>(null!);
+  const ringRef = useRef<THREE.Mesh>(null!);
+  const gateRef = useRef<THREE.Mesh>(null!);
+
+  const { positions, speeds, offsets, colors } = useMemo(() => {
+    const positions = new Float32Array(COUNT * 3);
+    const speeds = new Float32Array(COUNT);
+    const offsets = new Float32Array(COUNT);
+    const colors = new Float32Array(COUNT * 3);
+    const palette = [
+      new THREE.Color("#4ADE80"),
+      new THREE.Color("#67E8F9"),
+      new THREE.Color("#A78BFA"),
+      new THREE.Color("#F472B6"),
+    ];
+    for (let i = 0; i < COUNT; i++) {
+      const t = Math.random();
+      const radius = 0.15 + Math.random() * 1.6;
+      const angle = Math.random() * Math.PI * 2;
+      positions[i * 3] = Math.cos(angle) * radius;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 0.4;
+      positions[i * 3 + 2] = Math.sin(angle) * radius;
+      speeds[i] = 0.15 + Math.random() * 0.5;
+      offsets[i] = t * Math.PI * 2;
+      const c = palette[Math.floor(Math.random() * palette.length)];
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    return { positions, speeds, offsets, colors };
+  }, []);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const geo = pointsRef.current.geometry as THREE.BufferGeometry;
+    const pos = geo.attributes.position.array as Float32Array;
+    for (let i = 0; i < COUNT; i++) {
+      const a = offsets[i] + t * speeds[i] * 0.6;
+      // spiral inward toward gate at y=0 then expand outward
+      const phase = (t * speeds[i] * 0.25 + i * 0.0007) % 2;
+      let radius: number;
+      let y: number;
+      if (phase < 1) {
+        // inflow
+        radius = 1.8 * (1 - phase) + 0.2;
+        y = (0.5 - phase * 0.5);
+      } else {
+        const p = phase - 1;
+        radius = 0.2 + p * 1.8;
+        y = -p * 0.5;
+      }
+      pos[i * 3] = Math.cos(a) * radius;
+      pos[i * 3 + 1] = y + Math.sin(t * 1.4 + i) * 0.04;
+      pos[i * 3 + 2] = Math.sin(a) * radius;
+    }
+    geo.attributes.position.needsUpdate = true;
+
+    if (ringRef.current) ringRef.current.rotation.z = t * 0.3;
+    if (gateRef.current) {
+      gateRef.current.rotation.y = t * 0.4;
+      gateRef.current.rotation.x = Math.sin(t * 0.5) * 0.2;
+    }
+    if (pointsRef.current) pointsRef.current.rotation.y = t * 0.05;
+  });
+
   return (
-    <form
-      className={`capture${submitted ? " done" : ""}`}
-      onSubmit={(e) => {
-        e.preventDefault();
-        setSubmitted(true);
-      }}
-    >
-      <label htmlFor={cta} className="sr-only">Email address</label>
-      <input id={cta} type="email" required placeholder="you@email.com" />
-      <button type="submit" className="btn">{cta}</button>
-      <small>{note}</small>
-      <span className="ok">✓ {done}</span>
-    </form>
+    <group>
+      {/* Central gate */}
+      <mesh ref={gateRef}>
+        <torusGeometry args={[0.32, 0.012, 24, 96]} />
+        <meshStandardMaterial
+          color="#A78BFA"
+          emissive="#A78BFA"
+          emissiveIntensity={2}
+          metalness={1}
+          roughness={0.1}
+        />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[0.18, 32, 32]} />
+        <meshPhysicalMaterial
+          color="#070B1F"
+          metalness={0.9}
+          roughness={0.05}
+          clearcoat={1}
+          transmission={0.6}
+          thickness={0.5}
+          emissive="#4ADE80"
+          emissiveIntensity={0.4}
+        />
+      </mesh>
+
+      {/* Outer ring */}
+      <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[2.0, 0.004, 16, 128]} />
+        <meshBasicMaterial color="#A78BFA" transparent opacity={0.5} />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.6, 0.003, 16, 128]} />
+        <meshBasicMaterial color="#67E8F9" transparent opacity={0.3} />
+      </mesh>
+
+      {/* Particle tokens */}
+      <points ref={pointsRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[positions, 3]}
+            count={COUNT}
+          />
+          <bufferAttribute
+            attach="attributes-color"
+            args={[colors, 3]}
+            count={COUNT}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.018}
+          vertexColors
+          transparent
+          opacity={0.95}
+          sizeAttenuation
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </points>
+    </group>
   );
 }
 
-function Meter() {
+function HeroCanvas() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return (
+    <Canvas
+      camera={{ position: [0, 1.4, 3.2], fov: 50 }}
+      dpr={[1, 2]}
+      gl={{ antialias: true, alpha: true }}
+    >
+      <color attach="background" args={["#070B1F"]} />
+      <fog attach="fog" args={["#070B1F", 3, 8]} />
+      <ambientLight intensity={0.4} />
+      <pointLight position={[3, 3, 3]} intensity={2.5} color="#A78BFA" />
+      <pointLight position={[-3, -2, 2]} intensity={1.8} color="#4ADE80" />
+      <pointLight position={[0, 0, 0]} intensity={3} color="#67E8F9" distance={2} />
+      <Suspense fallback={null}>
+        <TokenStream />
+      </Suspense>
+    </Canvas>
+  );
+}
+
+/* ============== LIVE METER ============== */
+function LiveMeter() {
   const [modelId, setModelId] = useState("sonnet");
   const [tokens, setTokens] = useState(0);
   const [cost, setCost] = useState(0);
   const model = MODELS.find((m) => m.id === modelId)!;
-  const ref = useRef<number | null>(null);
 
   useEffect(() => {
+    setTokens(0);
+    setCost(0);
+    let raf = 0;
     let last = performance.now();
-    const tick = (t: number) => {
-      const dt = (t - last) / 1000;
-      last = t;
-      const tps = 38;
-      const add = tps * dt;
-      setTokens((x) => x + add);
-      setCost((c) => c + (add * 0.7 * model.inRate + add * 0.3 * model.outRate) / 1_000_000);
-      ref.current = requestAnimationFrame(tick);
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      setTokens((t) => t + dt * 380);
+      setCost((c) => c + dt * 380 * ((model.inRate * 0.6 + model.outRate * 0.4) / 1_000_000));
+      raf = requestAnimationFrame(tick);
     };
-    ref.current = requestAnimationFrame(tick);
-    return () => {
-      if (ref.current) cancelAnimationFrame(ref.current);
-    };
-  }, [model]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [modelId]);
 
   return (
-    <div className="meter">
-      <div className="meter-top">
-        <span className="lbl">Session meter</span>
-        <span className="live-tag"><span className="blip" />LIVE DEMO</span>
-      </div>
-      <div className="readout"><span className="cur">$</span>{cost.toFixed(4)}</div>
-      <div className="sub-read"><b>{Math.floor(tokens).toLocaleString()}</b> tokens drawn · {model.name}</div>
-      <div className="flow"><span /></div>
-      <div className="chips">
-        {MODELS.map((m) => (
+    <div className="t-glass">
+      <div className="t-model-tabs">
+        {MODELS.slice(0, 4).map((m) => (
           <button
             key={m.id}
-            className="chip"
-            aria-pressed={m.id === modelId}
-            onClick={() => { setModelId(m.id); setTokens(0); setCost(0); }}
-            type="button"
+            className={`t-model-tab ${m.id === modelId ? "active" : ""}`}
+            onClick={() => setModelId(m.id)}
           >
-            {m.name} <span className="rate">{m.label}</span>
+            {m.name}
           </button>
         ))}
+      </div>
+
+      <div className="t-meter-grid" style={{ marginTop: 8 }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <span className="t-pill">● Live</span>
+            <span className="mono" style={{ fontSize: 11, color: "var(--t-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Session draw
+            </span>
+          </div>
+          <div className="t-meter-display">
+            ${cost.toFixed(4)}
+          </div>
+          <div className="mono" style={{ marginTop: 12, color: "var(--t-muted)", fontSize: 13 }}>
+            {Math.floor(tokens).toLocaleString()} tokens streamed
+          </div>
+        </div>
+
+        <div>
+          <div className="t-meter-row"><span>Model</span><strong>{model.name}</strong></div>
+          <div className="t-meter-row"><span>Input rate</span><strong>${model.inRate}/M</strong></div>
+          <div className="t-meter-row"><span>Output rate</span><strong>${model.outRate}/M</strong></div>
+          <div className="t-meter-row"><span>Balance</span><strong>$24.81</strong></div>
+          <div className="t-meter-row"><span>Spent today</span><strong>${(cost + 0.42).toFixed(4)}</strong></div>
+        </div>
       </div>
     </div>
   );
 }
 
-function Index() {
+/* ============== GLASS HOVER TRACK ============== */
+function useGlassHover() {
+  return (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    el.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+}
+
+/* ============== REVEAL ============== */
+function useReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll(".reveal");
+    const els = document.querySelectorAll(".t-reveal");
     const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("in")),
-      { threshold: 0.12 },
+      (entries) => {
+        entries.forEach((en) => en.isIntersecting && en.target.classList.add("in"));
+      },
+      { threshold: 0.12 }
     );
-    els.forEach((el) => io.observe(el));
+    els.forEach((e) => io.observe(e));
     return () => io.disconnect();
   }, []);
+}
+
+/* ============== INDEX ============== */
+function Index() {
+  useReveal();
+  const onMove = useGlassHover();
+  const [submitted, setSubmitted] = useState(false);
 
   return (
-    <div className="tally-root">
-      <nav>
-        <div className="wrap nav-in">
-          <a href="#" className="brand"><span className="dot" />Tally</a>
-          <div className="nav-links">
+    <div className="tally-root t-grain">
+      <div className="t-orb a" />
+      <div className="t-orb b" />
+      <div className="t-orb c" />
+
+      {/* NAV */}
+      <nav className="t-nav">
+        <div className="t-nav-inner">
+          <div className="t-logo">
+            <div className="t-logo-mark" />
+            <span>Tally</span>
+          </div>
+          <div className="t-nav-links">
             <a href="#how">How it works</a>
             <a href="#models">Models</a>
-            <a href="#safe">Why it's safe</a>
             <a href="#pricing">Pricing</a>
-            <a href="#cta" className="nav-cta">Get early access</a>
+            <a href="#faq">FAQ</a>
           </div>
+          <a href="#waitlist" className="t-btn t-btn-ghost">Get early access</a>
         </div>
       </nav>
 
-      <header className="hero">
-        <div className="wrap hero-grid">
-          <div>
-            <span className="eyebrow">Metered AI access</span>
-            <h1>Pay for what <span className="draw">you draw.</span></h1>
-            <p className="lead">One balance covers Claude, GPT, and DeepSeek, billed by the token as you go. The meter moves only when you do.</p>
-            <WaitlistForm cta="Get early access" note="Top up from $1. We'll email you at launch, nothing else." done="You're on the list. We'll be in touch at launch." />
-          </div>
-          <Meter />
-        </div>
-      </header>
-
-      <section className="block" id="why">
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <span className="eyebrow">The subscription math</span>
-            <h2>Flat plans bill you for the buffet. You ate a sandwich.</h2>
-            <p>Subscriptions are priced for the heaviest users. If you write one report, translate one doc, or fix one bug this week, you paid for a month and used an afternoon.</p>
-          </div>
-          <div className="contrast reveal">
-            <div className="card bad">
-              <span className="tag">Subscription</span>
-              <h3>$20 every month, used or not</h3>
-              <ul>
-                <li><b>Unused allowance evaporates:</b>&nbsp;it doesn't roll over</li>
-                <li><b>Hit the limit mid-task:</b>&nbsp;wait until tomorrow</li>
-                <li><b>Locked to one provider:</b>&nbsp;one login, one model family</li>
-                <li><b>Forgot to cancel:</b>&nbsp;billed again anyway</li>
-              </ul>
-            </div>
-            <div className="card good">
-              <span className="tag">Tally</span>
-              <h3>A balance that only moves when you use it</h3>
-              <ul>
-                <li><b>Pay per token:</b>&nbsp;billed on actual usage, to 1/100th of a cent</li>
-                <li><b>Never expires:</b>&nbsp;top up once, use it whenever</li>
-                <li><b>Every model, one balance:</b>&nbsp;switch mid-task</li>
-                <li><b>No plan to forget:</b>&nbsp;there's nothing recurring</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="block" id="how">
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <span className="eyebrow">How it works</span>
-            <h2>Three steps. No setup.</h2>
-            <p>Top up, pick a model, go. The meter does the accounting.</p>
-          </div>
-          <div className="steps reveal">
-            <div className="step">
-              <div className="num">💳</div>
-              <h3>Top up credit</h3>
-              <p>From $1. No monthly fee, no minimum commitment. Your balance is yours until you spend it.</p>
-              <div className="meta">balance: $1.00 → ∞ days</div>
-            </div>
-            <div className="step">
-              <div className="num">🔀</div>
-              <h3>Pick any model</h3>
-              <p>Claude, GPT, or DeepSeek from the same balance. Switch between them mid-task and your context carries over.</p>
-              <div className="meta">claude · gpt · deepseek</div>
-            </div>
-            <div className="step">
-              <div className="num">🧾</div>
-              <h3>Pay per token</h3>
-              <p>You're charged on the tokens you actually send and receive, shown live and settled on real usage, not an estimate.</p>
-              <div className="meta">charged: $0.0175</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="block" id="safe">
-        <div className="wrap">
-          <div className="trust reveal">
-            <div className="trust-in">
-              <div>
-                <span className="eyebrow">Why it's safe</span>
-                <h2>No borrowed accounts. Nothing to get banned.</h2>
-                <p>Some "token marketplaces" route your prompt through a stranger's logged-in AI account. That breaks every provider's terms of service, and it's the seller whose personal account gets suspended when the fraud systems notice.</p>
-                <p>Tally doesn't touch anyone's login. We hold the commercial accounts with each provider, and you're our customer. Your usage runs on licensed access, metered and billed cleanly. There's simply nothing on the line to get banned.</p>
+      {/* HERO */}
+      <section className="t-hero">
+        <div className="t-hero-inner">
+          <div className="t-hero-grid">
+            <div>
+              <span className="t-eyebrow"><span className="dot" />Metered intelligence · v0.9 preview</span>
+              <h1 className="t-h1">
+                Pay only for<br />
+                the tokens<br />
+                <span className="grad">you actually draw.</span>
+              </h1>
+              <p className="t-lede">
+                One balance, every major model — Claude, GPT, Gemini, DeepSeek.
+                No subscription. No seat math. The meter only moves when you do.
+              </p>
+              <div className="t-cta-row">
+                <a href="#waitlist" className="t-btn t-btn-primary">
+                  Top up from $1 →
+                </a>
+                <a href="#how" className="t-btn t-btn-ghost">See the meter</a>
               </div>
-              <div className="checklist">
-                <div>We're the paying customer of each AI provider, not a key reseller</div>
-                <div>Your prompts run on licensed commercial access</div>
-                <div>No "borrow a stranger's subscription" mechanics</div>
-                <div>Clean metering: every token logged, every charge auditable</div>
+              <div className="t-trust">
+                <span>No card on file</span>
+                <span>No expiry on credit</span>
+                <span>Refunds, always</span>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="block" id="models">
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <span className="eyebrow">One balance, many models</span>
-            <h2>Use the right model for the job, not the one you're locked into.</h2>
-            <p>Need top-tier reasoning? Reach for Opus. Bulk drafting on a budget? Drop to Haiku or DeepSeek. Same balance, you choose per task.</p>
-          </div>
-          <div className="who reveal">
-            <div className="card"><div className="ic">🧠</div><h3>Heavy reasoning</h3><p>Claude Opus 4.8 for the hard problems: long-horizon work, tricky code, careful analysis.</p></div>
-            <div className="card"><div className="ic">⚖️</div><h3>Everyday work</h3><p>Claude Sonnet 4.6 and GPT for the best balance of speed, quality, and cost.</p></div>
-            <div className="card"><div className="ic">⚡</div><h3>High volume, low cost</h3><p>Haiku and DeepSeek when you're processing a lot and every fraction of a cent counts.</p></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="block" id="pricing">
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <span className="eyebrow">Pricing</span>
-            <h2>Top up what you want. Spend it however.</h2>
-            <p>Credit works the same no matter how much you add. These are just convenient starting amounts.</p>
-          </div>
-          <div className="prices reveal">
-            <div className="price">
-              <div className="amt"><span className="c">$</span>1</div>
-              <div className="toks">~200K tokens</div>
-              <p>A quick one-off: a report, a translation, a handful of questions.</p>
-            </div>
-            <div className="price feat">
-              <span className="pop">Most picked</span>
-              <div className="amt"><span className="c">$</span>5</div>
-              <div className="toks">~1M tokens</div>
-              <p>A real work session: long docs, code review, back-and-forth across models.</p>
-            </div>
-            <div className="price">
-              <div className="amt"><span className="c">$</span>15</div>
-              <div className="toks">~4M tokens</div>
-              <p>Extended projects. Still far below a monthly subscription you'd half-use.</p>
+            <div className="t-canvas-wrap">
+              <div className="t-canvas-meta tl">
+                <strong>TKN-STREAM</strong> · 1,800 particles
+              </div>
+              <div className="t-canvas-meta br">
+                aurora.gate<br /><strong>v0.9.2</strong>
+              </div>
+              <HeroCanvas />
             </div>
           </div>
-          <div className="price-note">⚠ Token estimates are indicative and vary by model and prompt length. Final rates confirmed at launch.</div>
         </div>
       </section>
 
-      <section className="block" id="audience">
-        <div className="wrap">
-          <div className="sec-head reveal">
-            <span className="eyebrow">Who it's for</span>
-            <h2>Built for everyone a flat plan overcharges.</h2>
+      {/* LIVE METER */}
+      <section className="t-section" id="how">
+        <div className="t-section-inner t-reveal">
+          <div className="t-section-head">
+            <div className="t-kicker">// 01 · The Meter</div>
+            <h2 className="t-h2">A balance that breathes in real time.</h2>
+            <p className="t-sub">
+              Switch models on the fly. Tokens stream, cost ticks, balance updates —
+              all from a single deposit. No bundles, no overages, no surprises.
+            </p>
           </div>
-          <div className="who reveal">
-            <div className="card"><div className="ic">🎯</div><h3>One-time users</h3><p>You need AI for a single task this month. A $20 plan is absurd for that. Start at $1.</p></div>
-            <div className="card"><div className="ic">📊</div><h3>Light users</h3><p>You use AI a few times a week. Free tiers cramp you; full plans waste you. Pay for the few times you do.</p></div>
-            <div className="card"><div className="ic">🛠️</div><h3>Builders & tinkerers</h3><p>You want one balance across providers and the freedom to route each call to the cheapest model that works.</p></div>
+          <div onMouseMove={onMove}>
+            <LiveMeter />
           </div>
         </div>
       </section>
 
-      <section className="final" id="cta">
-        <div className="wrap">
-          <span className="eyebrow">Early access</span>
-          <h2>Stop renting the buffet.</h2>
-          <p>Join the waitlist and get 10% bonus credit on your first top-up at launch.</p>
-          <WaitlistForm cta="Join the waitlist" note="No spam. One email at launch, that's it." done="You're on the list. See you at launch." />
+      {/* HOW IT WORKS */}
+      <section className="t-section">
+        <div className="t-section-inner">
+          <div className="t-section-head t-reveal">
+            <div className="t-kicker">// 02 · How it works</div>
+            <h2 className="t-h2">Three moves. Then it's just drawing.</h2>
+          </div>
+          <div className="t-feat-grid">
+            {[
+              { n: "STEP / 01", h: "Top up once", p: "From $1 to whatever you want. Stripe, Apple Pay, crypto. Credit never expires." },
+              { n: "STEP / 02", h: "Pick a model", p: "Claude, GPT, Gemini, DeepSeek — all behind one API key, one dashboard, one balance." },
+              { n: "STEP / 03", h: "Draw freely", p: "We meter every token at provider rates plus a flat 5% to keep the lights on. That's it." },
+            ].map((f, i) => (
+              <div key={i} className="t-glass t-feat t-reveal" onMouseMove={onMove}>
+                <div className="t-feat-num">{f.n}</div>
+                <h3>{f.h}</h3>
+                <p>{f.p}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <footer>
-        <div className="wrap foot-in">
-          <div className="brand"><span className="dot" />Tally</div>
-          <div>
-            <a href="#how">How it works</a>
-            <a href="#safe">Why it's safe</a>
-            <a href="#pricing">Pricing</a>
+      {/* MODELS */}
+      <section className="t-section" id="models">
+        <div className="t-section-inner">
+          <div className="t-section-head t-reveal">
+            <div className="t-kicker">// 03 · Models</div>
+            <h2 className="t-h2">Every major frontier model, one balance.</h2>
+            <p className="t-sub">
+              Provider rates passed through transparently. Switch mid-conversation. We handle the routing.
+            </p>
+          </div>
+          <div className="t-models-strip">
+            {MODELS.map((m, i) => (
+              <div key={m.id} className="t-glass t-model-card t-reveal" style={{ transitionDelay: `${i * 60}ms` }} onMouseMove={onMove}>
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: m.color, marginBottom: 14, boxShadow: `0 0 20px ${m.color}80` }} />
+                <div className="name">{m.name}</div>
+                <div className="rate">{m.provider}</div>
+                <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
+                  ${m.inRate} / ${m.outRate}<span style={{ color: "var(--t-muted)" }}> /M</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="wrap"><p className="disclaimer">Tally is an independent metered access service and is not affiliated with, endorsed by, or sponsored by Anthropic, OpenAI, DeepSeek, or Google. Model names are trademarks of their respective owners. Pricing and token estimates are indicative and subject to change at launch.</p></div>
+      </section>
+
+      {/* PRICING */}
+      <section className="t-section" id="pricing">
+        <div className="t-section-inner">
+          <div className="t-section-head t-reveal">
+            <div className="t-kicker">// 04 · Pricing</div>
+            <h2 className="t-h2">No tiers. No seats. Just credit.</h2>
+            <p className="t-sub">Top up what you want. Use what you draw. Refunds — always.</p>
+          </div>
+          <div className="t-price-grid">
+            {[
+              { t: "Starter", a: "$5", note: "Try every model", li: ["~3M tokens on Sonnet", "All models unlocked", "Web + API access"] },
+              { t: "Studio", a: "$50", featured: true, note: "Most popular", li: ["~33M tokens on Sonnet", "Priority routing", "Team workspace (3 seats)", "Usage analytics"] },
+              { t: "Atelier", a: "$500+", note: "For heavy draw", li: ["Volume discount tiers", "Dedicated capacity", "SLA + invoicing", "Private routing rules"] },
+            ].map((p, i) => (
+              <div key={i} className={`t-glass t-price ${p.featured ? "featured" : ""} t-reveal`} onMouseMove={onMove}>
+                {p.featured && <span className="t-pill">{p.note}</span>}
+                <div style={{ marginTop: p.featured ? 14 : 0 }}>
+                  <div style={{ fontFamily: "JetBrains Mono", fontSize: 12, color: "var(--t-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{p.t}</div>
+                  <div className="amount"><span className="grad">{p.a}</span></div>
+                  <div style={{ color: "var(--t-muted)", fontSize: 13 }}>{p.featured ? "starting credit" : p.note}</div>
+                </div>
+                <ul>{p.li.map((l) => <li key={l}>{l}</li>)}</ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="t-section" id="faq">
+        <div className="t-section-inner">
+          <div className="t-section-head t-reveal">
+            <div className="t-kicker">// 05 · FAQ</div>
+            <h2 className="t-h2">Things people ask before they top up.</h2>
+          </div>
+          <div className="t-faq">
+            {[
+              { q: "Is this just a reseller markup?", a: "We pass provider rates through and add a flat 5% to cover infra and support. No hidden bundles, no inflated tiers. The meter shows you provider rate + our cut, separately." },
+              { q: "What happens to unused credit?", a: "Nothing. It never expires. Withdraw it back to your card any time, minus the payment processor fee. Truly your money sitting with us." },
+              { q: "Can I switch models in the same session?", a: "Yes. Same API key, same context window if the model supports it. Switch from Sonnet to Opus to GPT mid-conversation. We route, you draw." },
+              { q: "What about rate limits?", a: "We pool capacity across providers. If one is throttled, we surface that in the dashboard and let you fall back to an alternative model with one click." },
+              { q: "Do you train on my data?", a: "No. We don't store prompts beyond the active request, we don't train on anything, and we offer zero-retention routes for sensitive workloads." },
+              { q: "Is there an SDK?", a: "OpenAI-compatible API on day one. Drop-in replacement for openai-node, anthropic-sdk, and most LangChain integrations." },
+            ].map((f, i) => (
+              <details key={i} className="t-glass">
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WAITLIST */}
+      <section className="t-section" id="waitlist">
+        <div className="t-section-inner t-reveal">
+          <div className="t-cta-box">
+            <span className="t-eyebrow"><span className="dot" />Launching Q3 · 2026</span>
+            <h2 className="t-h2" style={{ marginTop: 20 }}>
+              The meter goes live<br />
+              <span style={{ background: "var(--t-aurora)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                when you do.
+              </span>
+            </h2>
+            <p className="t-sub" style={{ margin: "20px auto 0" }}>
+              Join the early access list. First 1,000 get $10 of credit on the house.
+            </p>
+            <form
+              className="t-form"
+              onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}
+            >
+              <input type="email" required placeholder="you@studio.com" disabled={submitted} />
+              <button type="submit" className="t-btn t-btn-primary" disabled={submitted}>
+                {submitted ? "On the list" : "Get early access"}
+              </button>
+            </form>
+            {submitted && <span className="ok" style={{ color: "var(--t-mint)", display: "block", marginTop: 16, fontSize: 14 }}>✓ See you at launch.</span>}
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="t-footer">
+        <div className="t-footer-inner">
+          <div className="t-logo">
+            <div className="t-logo-mark" />
+            <span>Tally</span>
+          </div>
+          <p className="disclaimer">
+            Tally is an independent metered access service and is not affiliated with, endorsed by, or sponsored by
+            Anthropic, OpenAI, DeepSeek, or Google. Model names are trademarks of their respective owners.
+            Pricing is indicative and subject to change at launch.
+          </p>
+          <span className="mono">© 2026</span>
+        </div>
       </footer>
     </div>
   );
