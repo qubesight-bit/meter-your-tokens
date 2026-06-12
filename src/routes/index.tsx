@@ -7,9 +7,9 @@ import "../styles/tally.css";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tally — Pay-as-you-draw access to every AI" },
+      { title: "Tokn.lat — Pay-as-you-draw access to every AI" },
       { name: "description", content: "One balance, every major model. No subscription. The meter only moves when you do." },
-      { property: "og:title", content: "Tally — Pay-as-you-draw access to every AI" },
+      { property: "og:title", content: "Tokn.lat — Pay-as-you-draw access to every AI" },
       { property: "og:description", content: "Top up once. Draw on Claude, GPT, DeepSeek and Gemini from a single balance, billed by the token." },
       { property: "og:url", content: "/" },
     ],
@@ -290,7 +290,7 @@ function Index() {
         <div className="t-nav-inner">
           <div className="t-logo">
             <div className="t-logo-mark" />
-            <span>Tally</span>
+            <span>Tokn.lat</span>
           </div>
           <div className="t-nav-links">
             <a href="#how">How it works</a>

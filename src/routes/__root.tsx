@@ -77,14 +77,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tally: pay for what you draw" },
+      { title: "Tokn.lat: pay for what you draw" },
       { name: "description", content: "One balance, every major AI model. No subscription. The meter only moves when you do." },
       { name: "theme-color", content: "#070B1F" },
-      { property: "og:title", content: "Tally: pay for what you draw" },
+      { property: "og:title", content: "Tokn.lat: pay for what you draw" },
       { property: "og:description", content: "Top up once and draw on Claude, GPT, or DeepSeek from a single balance, billed by the token as you go." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Tally: pay for what you draw" },
+      { name: "twitter:title", content: "Tokn.lat: pay for what you draw" },
       { name: "twitter:description", content: "One balance covers Claude, GPT, and DeepSeek, billed by the token. Top up from $1." },
     ],
     links: [
