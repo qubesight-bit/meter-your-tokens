@@ -280,7 +280,7 @@ function Index() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <div className="tally-root t-grain">
+    <div className="tokn-root t-grain">
       <div className="t-orb a" />
       <div className="t-orb b" />
       <div className="t-orb c" />
@@ -494,10 +494,10 @@ function Index() {
         <div className="t-footer-inner">
           <div className="t-logo">
             <div className="t-logo-mark" />
-            <span>Tally</span>
+            <span>Tokn.lat</span>
           </div>
           <p className="disclaimer">
-            Tally is an independent metered access service and is not affiliated with, endorsed by, or sponsored by
+            Tokn.lat is an independent metered access service and is not affiliated with, endorsed by, or sponsored by
             Anthropic, OpenAI, DeepSeek, or Google. Model names are trademarks of their respective owners.
             Pricing is indicative and subject to change at launch.
           </p>
