@@ -346,8 +346,8 @@ function Index() {
                 <span className="grad">you actually draw.</span>
               </h1>
               <p className="t-lede">
-                One balance, every major model — Claude, GPT, Gemini, DeepSeek.
-                No subscription. No seat math. The meter only moves when you do.
+                One balance for text <em>and</em> voice — Claude, GPT, Gemini, DeepSeek and ElevenLabs.
+                Not just chatbots. No subscription, no seat math. The meter only moves when you do.
               </p>
               <div className="t-cta-row">
                 <a href="#waitlist" className="t-btn t-btn-primary">
@@ -416,8 +416,8 @@ function Index() {
             <div className="t-kicker">Models</div>
             <h2 className="t-h2">Five frontier models on one balance.</h2>
             <p className="t-sub">
-              Rates below are the provider's own published prices per million input / output tokens.
-              Add 5% at checkout — that's the whole pricing sheet.
+              Text models bill per million input / output tokens; voice bills per character spoken.
+              Rates below are each provider's own published price — add 5% at checkout.
             </p>
           </div>
           <div className="t-models-strip">
@@ -426,9 +426,20 @@ function Index() {
                 <div style={{ width: 8, height: 8, borderRadius: 2, background: m.color, marginBottom: 14 }} />
                 <div className="name">{m.name}</div>
                 <div className="rate">{m.provider}</div>
-                <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
-                  ${m.inRate} in · ${m.outRate} out<span style={{ color: "var(--t-muted)" }}> / 1M tok</span>
-                </div>
+                {m.kind === "voice" ? (
+                  <>
+                    <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
+                      ${m.charRate} <span style={{ color: "var(--t-muted)" }}>/ 1k characters</span>
+                    </div>
+                    <div className="rate" style={{ marginTop: 6, color: "var(--t-muted)", fontSize: 12 }}>
+                      Text-to-speech for narration, dubbing, product voices.
+                    </div>
+                  </>
+                ) : (
+                  <div className="rate" style={{ marginTop: 12, color: "var(--t-text)" }}>
+                    ${m.inRate} in · ${m.outRate} out<span style={{ color: "var(--t-muted)" }}> / 1M tok</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
