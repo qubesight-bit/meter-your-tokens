@@ -66,12 +66,8 @@
 .t-logo { display: flex; align-items: center; gap: 10px; font-family: "Space Grotesk"; font-weight: 600; font-size: 18px; letter-spacing: -0.02em; }
 .t-logo-mark {
   width: 28px; height: 28px; border-radius: 8px;
-  background: var(--t-aurora); position: relative;
-  box-shadow: 0 0 24px rgba(167, 139, 250, 0.5);
-}
-.t-logo-mark::after {
-  content: ""; position: absolute; inset: 2px; border-radius: 6px;
-  background: rgba(7,11,31,0.55); backdrop-filter: blur(4px);
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(167, 139, 250, 0.5));
 }
 .t-nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--t-muted); }
 .t-nav-links a { color: inherit; text-decoration: none; transition: color .2s; }
