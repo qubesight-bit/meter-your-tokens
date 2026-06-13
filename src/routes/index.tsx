@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { supabase } from "@/integrations/supabase/client";
+import toknLogo from "@/assets/tokn-logo.png";
 import "../styles/tokn.css";
 
 export const Route = createFileRoute("/")({
