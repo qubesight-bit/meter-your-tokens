@@ -350,7 +350,7 @@ function Index() {
       <nav className="t-nav">
         <div className="t-nav-inner">
           <div className="t-logo">
-            <div className="t-logo-mark" />
+            <img src={toknLogo} alt="Tokn.lat logo" width={28} height={28} className="t-logo-mark" />
             <span>Tokn.lat</span>
           </div>
           <div className="t-nav-links">
@@ -607,7 +607,7 @@ function Index() {
       <footer className="t-footer">
         <div className="t-footer-inner">
           <div className="t-logo">
-            <div className="t-logo-mark" />
+            <img src={toknLogo} alt="Tokn.lat logo" width={28} height={28} className="t-logo-mark" />
             <span>Tokn.lat</span>
           </div>
           <p className="disclaimer">
